@@ -1,0 +1,23 @@
+# One-click deploy on Render: New > Blueprint > pick your GitHub repo.
+# Secrets are NOT stored here. Render asks you for the values marked sync: false.
+services:
+  - type: web
+    name: civicease
+    runtime: docker
+    plan: free
+    healthCheckPath: /api/health
+    envVars:
+      - key: LLM_PROVIDER
+        value: gemini            # or openai / anthropic
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.8-flash
+      - key: LLM_TIMEOUT_SECONDS
+        value: "120"
+      - key: TAVILY_API_KEY      # optional fallback search
+        sync: false
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "20"
+      - key: RATE_LIMIT_GLOBAL_PER_MINUTE
+        value: "120"

@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CivicEase</title>
+  <meta name="description" content="Find real government schemes, check if you qualify, and listen to a short explainer in your own language.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f6f5c'/%3E%3Cpath d='M9 17l5 5 9-11' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#main" data-i18n="skip">Skip to content</a>
+
+  <header class="top">
+    <div class="wrap top-inner">
+      <div class="brand">
+        <span class="logo" aria-hidden="true">&#10003;</span>
+        <div>
+          <h1>CivicEase</h1>
+          <p class="tagline" data-i18n="tagline">Government schemes, explained simply</p>
+        </div>
+      </div>
+      <div class="lang">
+        <label for="lang-select" class="lang-label" data-i18n="lang.label">Language</label>
+        <select id="lang-select" class="lang-select"></select>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="wrap">
+    <p class="privacy" role="note">
+      <strong data-i18n="privacy.strong">Private by design.</strong>
+      <span data-i18n="privacy.text">Your details are used only for this check and are never stored. Please do not type your name, phone number or address anywhere.</span>
+    </p>
+    <p id="mode-note" class="mode-note" hidden></p>
+    <p id="ui-note" class="mode-note" hidden></p>
+    <div id="alert" class="alert" role="alert" hidden></div>
+    <p id="loading" class="loading" hidden><span class="spinner" aria-hidden="true"></span> <span id="loading-text"></span></p>
+
+    <!-- Landing: national or state -->
+    <section id="scope-card" class="card" aria-labelledby="h-scope">
+      <h2 id="h-scope" data-i18n="scope.title">What would you like to explore?</h2>
+      <div class="scope-grid">
+        <button type="button" id="scope-national" class="scope-btn">
+          <span class="scope-title" data-i18n="scope.national.title">National schemes</span>
+          <span class="scope-sub" data-i18n="scope.national.sub">Run by the Government of India</span>
+        </button>
+        <button type="button" id="scope-state" class="scope-btn" aria-expanded="false" aria-controls="state-pick">
+          <span class="scope-title" data-i18n="scope.state.title">State schemes</span>
+          <span class="scope-sub" data-i18n="scope.state.sub">Run by your state government</span>
+        </button>
+      </div>
+      <form id="state-pick" class="state-pick" hidden>
+        <label for="scope-state-select" data-i18n="scope.pick.label">Choose your state or union territory</label>
+        <div class="row">
+          <select id="scope-state-select"></select>
+          <button type="submit" class="btn" data-i18n="scope.continue">Continue</button>
+        </div>
+      </form>
+    </section>
+
+    <div id="scope-bar" class="scope-bar" hidden>
+      <span><span data-i18n="scope.showing">Showing:</span> <strong id="scope-label"></strong></span>
+      <button type="button" id="scope-change" class="link-btn" data-i18n="scope.change">Change</button>
+    </div>
+
+    <!-- Step 1: find a scheme -->
+    <section id="find-card" class="card" aria-labelledby="h-find" hidden>
+      <h2 id="h-find"><span class="step">1</span> <span data-i18n="find.title">Find a scheme</span></h2>
+      <form id="form-ask" class="row">
+        <label class="sr" for="ask-input" data-i18n="find.ask.label">What do you need help with?</label>
+        <input id="ask-input" type="text" maxlength="300" autocomplete="off" data-i18n-placeholder="find.ask.placeholder"
+               placeholder="For example: farmer income support, girl child education">
+        <button type="button" id="mic" class="btn ghost" data-i18n-aria="find.mic" aria-label="Speak your question" hidden>&#127908;</button>
+        <button type="submit" class="btn" data-i18n="find.search">Search</button>
+      </form>
+      <p class="hint" data-i18n="find.hint">Do not include personal details. Results come live from official government websites.</p>
+      <div id="topics" class="chips" role="group" data-i18n-aria="find.topics.label" aria-label="Popular topics"></div>
+      <div class="row gap-top">
+        <button type="button" id="popular" class="btn ghost" data-i18n="find.popular">Show popular schemes</button>
+      </div>
+
+      <ul id="ask-results" class="scheme-list"></ul>
+      <div id="sources" class="sources" hidden>
+        <h4 data-i18n="find.sources">Official sources used</h4>
+        <ul id="sources-list" class="plain"></ul>
+      </div>
+
+      <details class="own-doc">
+        <summary data-i18n="own.summary">Have your own scheme document instead?</summary>
+        <div class="tabs" role="tablist" data-i18n-aria="own.tabs.label" aria-label="How to add a document">
+          <button role="tab" id="tab-upload" aria-selected="true" aria-controls="panel-upload" data-i18n="own.upload">Upload PDF</button>
+          <button role="tab" id="tab-link" aria-selected="false" aria-controls="panel-link" tabindex="-1" data-i18n="own.link">Link</button>
+          <button role="tab" id="tab-paste" aria-selected="false" aria-controls="panel-paste" tabindex="-1" data-i18n="own.paste">Paste text</button>
+        </div>
+        <div id="panel-upload" role="tabpanel" aria-labelledby="tab-upload">
+          <form id="form-upload">
+            <label for="file-input" data-i18n="own.upload.label">Government notification (PDF or text file)</label>
+            <input id="file-input" type="file" accept="application/pdf,.pdf,text/plain,.txt" required>
+            <button type="submit" class="btn" data-i18n="own.upload.btn">Read this document</button>
+          </form>
+        </div>
+        <div id="panel-link" role="tabpanel" aria-labelledby="tab-link" hidden>
+          <form id="form-link">
+            <label for="link-input" data-i18n="own.link.label">Link to a scheme page or PDF</label>
+            <input id="link-input" type="url" placeholder="https://..." required>
+            <button type="submit" class="btn" data-i18n="own.link.btn">Read this link</button>
+          </form>
+          <p id="link-policy" class="hint"></p>
+        </div>
+        <div id="panel-paste" role="tabpanel" aria-labelledby="tab-paste" hidden>
+          <form id="form-paste">
+            <label for="paste-input" data-i18n="own.paste.label">Paste the scheme text</label>
+            <textarea id="paste-input" rows="7" maxlength="200000" required></textarea>
+            <button type="submit" class="btn" data-i18n="own.paste.btn">Read this text</button>
+          </form>
+        </div>
+      </details>
+    </section>
+
+    <!-- Step 2 -->
+    <section id="scheme-card" class="card" aria-labelledby="h-scheme" hidden>
+      <h2 id="h-scheme"><span class="step">2</span> <span data-i18n="scheme.title">What we found</span></h2>
+      <h3 id="scheme-name"></h3>
+      <p id="scheme-meta" class="hint"></p>
+      <p id="scheme-summary"></p>
+      <ul id="scheme-warnings" class="notes"></ul>
+      <h4 data-i18n="scheme.conditions">Conditions in this scheme</h4>
+      <ul id="scheme-rules" class="plain"></ul>
+      <ul id="scheme-links" class="plain"></ul>
+    </section>
+
+    <!-- Step 3 -->
+    <section id="profile-card" class="card" aria-labelledby="h-profile" hidden>
+      <h2 id="h-profile"><span class="step">3</span> <span data-i18n="profile.title">Check if you qualify</span></h2>
+      <form id="form-profile" novalidate>
+        <div class="grid">
+          <div class="field" data-field="state">
+            <label for="f-state"><span data-i18n="f.state">State or union territory</span> <span class="req" data-i18n="req">required</span></label>
+            <select id="f-state"></select>
+          </div>
+          <div class="field" data-field="occupation">
+            <label for="f-occupation"><span data-i18n="f.occupation">Occupation</span> <span class="req" data-i18n="req">required</span></label>
+            <select id="f-occupation"></select>
+          </div>
+          <div class="field" data-field="annual_income_lakh">
+            <label for="f-income"><span data-i18n="f.income">Yearly family income, in Rs lakh</span> <span class="req" data-i18n="req">required</span></label>
+            <input id="f-income" type="number" inputmode="decimal" min="0" max="100000" step="0.1" data-i18n-placeholder="f.income.ph" placeholder="For example 1.8">
+            <span class="hint" data-i18n="f.income.hint">An approximate amount is fine. 1 lakh = 100,000.</span>
+          </div>
+          <div class="field" data-field="category">
+            <label for="f-category"><span data-i18n="f.category">Category</span> <span class="req" data-i18n="req">required</span></label>
+            <select id="f-category"></select>
+          </div>
+          <div class="field" data-field="age">
+            <label for="f-age"><span data-i18n="f.age">Age</span> <span class="opt" data-i18n="opt">optional</span></label>
+            <input id="f-age" type="number" inputmode="numeric" min="0" max="120" step="1">
+          </div>
+          <div class="field" data-field="gender">
+            <label for="f-gender"><span data-i18n="f.gender">Gender</span> <span class="opt" data-i18n="opt">optional</span></label>
+            <select id="f-gender"></select>
+          </div>
+          <div class="field" data-field="business_type">
+            <label for="f-business"><span data-i18n="f.business">Business type</span> <span class="opt" data-i18n="opt">optional</span></label>
+            <select id="f-business"></select>
+          </div>
+        </div>
+        <label class="check"><input type="checkbox" id="keep"> <span data-i18n="profile.keep">Keep my answers on screen so I can try another scheme (never saved)</span></label>
+        <div class="row">
+          <button type="submit" class="btn" data-i18n="profile.check">Check my eligibility</button>
+          <button type="button" id="clear" class="btn ghost" data-i18n="profile.clear">Clear my details</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- Step 4 -->
+    <section id="result-card" class="card" aria-labelledby="h-result" aria-live="polite" hidden>
+      <h2 id="h-result"><span class="step">4</span> <span data-i18n="result.title">Your result</span></h2>
+      <div id="result-body">
+        <div id="verdict" class="verdict"></div>
+        <p id="translation-note" class="notes-line" hidden></p>
+
+        <div class="audio">
+          <button type="button" id="listen" class="btn"><span aria-hidden="true">&#9654;</span> <span data-i18n="result.listen">Listen to this summary</span></button>
+          <button type="button" id="device-voice" class="btn ghost" hidden data-i18n="result.device">Use my device's voice</button>
+          <audio id="player" controls preload="none" hidden></audio>
+          <p id="audio-status" class="hint" role="status"></p>
+        </div>
+
+        <section class="block"><h3 id="t-what"></h3><ul id="b-what" class="bullets"></ul></section>
+        <section class="block"><h3 id="t-eligible"></h3><ul id="b-eligible" class="checks"></ul></section>
+        <section class="block"><h3 id="t-documents"></h3><ul id="b-documents" class="bullets"></ul></section>
+        <section class="block"><h3 id="t-how"></h3><ol id="b-how" class="steps"></ol></section>
+        <p id="disclaimer" class="disclaimer"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="wrap foot">
+    <p data-i18n="footer">CivicEase is an informational guide. It does not replace legal advice or an official decision by the government. Please confirm details at the official scheme office before you apply.</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
