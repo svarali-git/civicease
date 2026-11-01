@@ -3,9 +3,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#292b91">
   <title>CivicEase</title>
   <meta name="description" content="Find real government schemes, check if you qualify, and listen to a short explainer in your own language.">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f6f5c'/%3E%3Cpath d='M9 17l5 5 9-11' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3ClinearGradient id='g' x2='1' y2='1'%3E%3Cstop stop-color='%23ff9d28'/%3E%3Cstop offset='1' stop-color='%23ff5d2d'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='32' height='32' rx='9' fill='url(%23g)'/%3E%3Cpath d='M9 17l5 5 9-11' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -71,7 +72,12 @@
         <label class="sr" for="ask-input" data-i18n="find.ask.label">What do you need help with?</label>
         <input id="ask-input" type="text" maxlength="300" autocomplete="off" data-i18n-placeholder="find.ask.placeholder"
                placeholder="For example: farmer income support, girl child education">
-        <button type="button" id="mic" class="btn ghost" data-i18n-aria="find.mic" aria-label="Speak your question" hidden>&#127908;</button>
+        <button type="button" id="mic" class="btn ghost mic-btn" data-i18n-aria="find.mic" aria-label="Speak your question" hidden>
+          <svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <rect x="9" y="3" width="6" height="11" rx="3"></rect>
+            <path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"></path>
+          </svg>
+        </button>
         <button type="submit" class="btn" data-i18n="find.search">Search</button>
       </form>
       <p class="hint" data-i18n="find.hint">Do not include personal details. Results come live from official government websites.</p>
