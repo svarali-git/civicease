@@ -54,7 +54,7 @@ def _normalise_rule_values(rules: list[Rule]) -> None:
 
 
 async def _llm_extract(text: str, source: str) -> Scheme:
-    limit = config.get_int("MAX_EXTRACT_CHARS", 150000)
+    limit = config.default_extract_chars()
     data = await llm.complete_json(
         SYSTEM_PROMPT, f"Scheme document text:\n<document>\n{text[:limit]}\n</document>", max_tokens=5000
     )

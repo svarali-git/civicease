@@ -16,7 +16,7 @@ env_file = find_dotenv(usecwd=False) or "(none found)"
 print("Settings file used :", env_file)
 print("Expected location  :", Path(__file__).resolve().parent.parent / ".env")
 print()
-for name in ("GEMINI_API_KEY", "TAVILY_API_KEY", "BRAVE_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY"):
+for name in ("GEMINI_API_KEY", "GROQ_API_KEY", "COMPATIBLE_API_KEY", "TAVILY_API_KEY", "BRAVE_API_KEY", "ANTHROPIC_API_KEY", "OPENAI_API_KEY"):
     print(f"{name:20}", "set" if config.get(name) else "NOT set")
 print()
 print("LLM_PROVIDER       :", config.get("LLM_PROVIDER", "auto"), "->", config.llm_provider())

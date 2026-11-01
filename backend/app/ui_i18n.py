@@ -63,7 +63,10 @@ async def translate_ui(language: str) -> tuple[dict, bool]:
     keys = list(english)
     chunks = [{k: english[k] for k in keys[i:i + CHUNK]} for i in range(0, len(keys), CHUNK)]
     try:
-        parts = await asyncio.gather(*(_translate_chunk(c, language) for c in chunks))
+        if config.llm_provider() in ("groq", "compatible"):  # small per-minute token caps: one at a time
+            parts = [await _translate_chunk(c, language) for c in chunks]
+        else:
+            parts = await asyncio.gather(*(_translate_chunk(c, language) for c in chunks))
     except Exception as exc:  # LLMError, network
         log.warning("UI translation failed (%s)", type(exc).__name__)
         return english, False

@@ -4,6 +4,7 @@ Used for three things only: structured extraction from scheme text, translation 
 plain-language explainers, and (Gemini only) live search of official government websites.
 Prompts never contain user profile data.
 """
+import asyncio
 import json
 import logging
 import re
@@ -86,13 +87,44 @@ def _wrap_http_error(exc: httpx.HTTPError) -> LLMError:
     return LLMError(f"Request failed ({type(exc).__name__}). The AI service took too long or could not be reached.")
 
 
+MAX_WAIT_SECONDS = 30
+
+
+async def _send(client: httpx.AsyncClient, url: str, **kwargs) -> httpx.Response:
+    """POST with a short wait-and-retry when the provider says 'slow down' (HTTP 429 or 503)."""
+    for attempt in range(3):
+        resp = await client.post(url, **kwargs)
+        if resp.status_code not in (429, 503) or attempt == 2:
+            return resp
+        try:
+            wait = float(resp.headers.get("retry-after", ""))
+        except ValueError:
+            wait = 8.0 * (attempt + 1)
+        if wait > MAX_WAIT_SECONDS:
+            return resp  # a long wait means a daily quota, not a burst; do not hold the visitor
+        log.warning("LLM busy (HTTP %s); retrying in %.0f s", resp.status_code, wait)
+        await asyncio.sleep(wait)
+    return resp
+
+
+def _chat_settings(provider: str) -> tuple[str, str, str]:
+    """(url, api key, model) for OpenAI-style chat completion services."""
+    if provider == "groq":
+        base = "https://api.groq.com/openai/v1"
+        return base + "/chat/completions", config.get("GROQ_API_KEY"), config.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+    if provider == "compatible":
+        base = config.get("COMPATIBLE_BASE_URL", "https://openrouter.ai/api/v1").rstrip("/")
+        return base + "/chat/completions", config.get("COMPATIBLE_API_KEY"), config.get("COMPATIBLE_MODEL")
+    return "https://api.openai.com/v1/chat/completions", config.get("OPENAI_API_KEY"), config.get("OPENAI_MODEL", "gpt-4o")
+
+
 async def complete_json(system: str, user: str, max_tokens: int = 4000) -> dict:
     """Ask the configured model for a single JSON object and return it parsed."""
     provider = config.llm_provider()
     try:
         async with httpx.AsyncClient(timeout=_timeout()) as client:
             if provider == "anthropic":
-                resp = await client.post(
+                resp = await _send(client, 
                     "https://api.anthropic.com/v1/messages",
                     headers={
                         "x-api-key": config.get("ANTHROPIC_API_KEY"),
@@ -108,24 +140,24 @@ async def complete_json(system: str, user: str, max_tokens: int = 4000) -> dict:
                 )
                 resp.raise_for_status()
                 text = "".join(block.get("text", "") for block in resp.json().get("content", []))
-            elif provider == "openai":
-                resp = await client.post(
-                    "https://api.openai.com/v1/chat/completions",
-                    headers={"Authorization": f"Bearer {config.get('OPENAI_API_KEY')}"},
-                    json={
-                        "model": config.get("OPENAI_MODEL", "gpt-4o"),
-                        "max_tokens": max_tokens,
-                        "response_format": {"type": "json_object"},
-                        "messages": [
-                            {"role": "system", "content": system},
-                            {"role": "user", "content": user},
-                        ],
-                    },
-                )
+            elif provider in ("openai", "groq", "compatible"):
+                url, key, model = _chat_settings(provider)
+                body = {
+                    "model": model,
+                    "max_tokens": max_tokens,
+                    "messages": [{"role": "system", "content": system}, {"role": "user", "content": user}],
+                }
+                if config.get("JSON_MODE", "true").lower() != "false":
+                    body["response_format"] = {"type": "json_object"}
+                resp = await _send(client, url, headers={"Authorization": f"Bearer {key}"}, json=body)
+                if resp.status_code == 400 and "response_format" in body:
+                    # some models do not support JSON mode; ask again without it (the reply is still parsed as JSON)
+                    del body["response_format"]
+                    resp = await _send(client, url, headers={"Authorization": f"Bearer {key}"}, json=body)
                 resp.raise_for_status()
-                text = resp.json()["choices"][0]["message"]["content"]
+                text = resp.json()["choices"][0]["message"]["content"] or ""
             elif provider == "gemini":
-                resp = await client.post(
+                resp = await _send(client, 
                     _gemini_url(),
                     headers=_gemini_headers(),
                     json={
@@ -159,7 +191,7 @@ async def complete_grounded(system: str, user: str, max_tokens: int = 4000) -> t
         raise LLMError("Live search needs a Gemini key. Set GEMINI_API_KEY and LLM_PROVIDER=gemini.")
     try:
         async with httpx.AsyncClient(timeout=_timeout()) as client:
-            resp = await client.post(
+            resp = await _send(client, 
                 _gemini_url(),
                 headers=_gemini_headers(),
                 json={

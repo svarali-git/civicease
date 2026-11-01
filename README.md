@@ -33,7 +33,18 @@ python -m uvicorn app.main:app --port 8000
 ```
 Open http://localhost:8000. API docs at `/docs`.
 
-### Required for live data: a Gemini key
+### Free option without Gemini: Groq plus Tavily
+Groq (https://console.groq.com/keys, free tier, no card) does the reading and translating; Tavily finds the official pages. In `.env`:
+```
+LLM_PROVIDER=groq
+GROQ_API_KEY=your-key
+GROQ_MODEL=llama-3.3-70b-versatile
+TAVILY_API_KEY=your-tavily-key
+```
+Any OpenAI-style service works with `LLM_PROVIDER=compatible` plus `COMPATIBLE_API_KEY`, `COMPATIBLE_BASE_URL` and `COMPATIBLE_MODEL`. Free tiers are small, so the app waits and retries short rate limits, reads at most 20,000 characters per document (`MAX_EXTRACT_CHARS`), and translates the interface one chunk at a time.
+
+### Live search with Gemini
+
 In `.env`:
 ```
 LLM_PROVIDER=gemini
@@ -74,13 +85,13 @@ After changing interface text in `index.html` or `app.js`, run `python scripts/b
 ```bash
 cd backend && python -m pytest -q
 ```
-49 offline tests: acceptance criteria, discovery (official-link filtering, state/national scope, fallbacks), languages, voice fallback, SSRF blocking, headers. Test PDFs live in `backend/tests/fixtures` (regenerate with `python scripts/make_sample_pdfs.py`).
+58 offline tests: acceptance criteria, discovery (official-link filtering, state/national scope, fallbacks), languages, voice fallback, SSRF blocking, headers. Test PDFs live in `backend/tests/fixtures` (regenerate with `python scripts/make_sample_pdfs.py`).
 
 ## Known limitations
 - **Not tested against the live Gemini, Tavily, Brave, OpenAI, Anthropic or ElevenLabs services** (no network or keys in the build environment). All of those paths were tested with mocked responses only. Run it once with your key before relying on it.
 - **Live results are AI-assisted web search, not an official API.** They can be incomplete or wrong. The app shows sources and warns when none is official; always verify at the official website.
 - Gemini's free tier has rate and daily limits, and Google changes model names often (update `GEMINI_MODEL`).
-- Live search needs Gemini (or Tavily/Brave). Anthropic and OpenAI keys work for extraction and translation but not live search.
+- Live search needs Gemini (Google Search) or Tavily/Brave. Anthropic, OpenAI, Groq and compatible keys work for extraction and translation but not for search.
 - No free voice exists for Odia and Assamese; those use the device voice if available. Urdu uses gTTS.
 - Interface and heading translations are AI-generated or hand-written and should be reviewed by native speakers. Error messages that come from the server stay in English.
 - Scanned or custom-font PDFs (common for Tamil) cannot be read; there is no OCR.

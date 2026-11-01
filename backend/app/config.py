@@ -23,17 +23,25 @@ def get_int(name: str, default: int) -> int:
         return default
 
 
+LLM_PROVIDERS = ("anthropic", "openai", "gemini", "groq", "compatible")
+
+
 def llm_provider() -> str:
-    """'anthropic', 'openai', 'gemini' or 'none' (demo mode with rule-based extraction)."""
+    """One of LLM_PROVIDERS, or 'none' (demo mode with rule-based extraction)."""
     choice = get("LLM_PROVIDER", "auto").lower()
     if choice == "none":
         return "none"
-    if choice in ("anthropic", "openai", "gemini"):
+    if choice in LLM_PROVIDERS:
         return choice if get(f"{choice.upper()}_API_KEY") else "none"
-    for name in ("anthropic", "openai", "gemini"):
+    for name in LLM_PROVIDERS:
         if get(f"{name.upper()}_API_KEY"):
             return name
     return "none"
+
+
+def default_extract_chars() -> int:
+    """How much document text to send to the model. Free tiers with small per-minute token caps need less."""
+    return get_int("MAX_EXTRACT_CHARS", 20000 if llm_provider() in ("groq", "compatible") else 150000)
 
 
 def tts_provider() -> str:
